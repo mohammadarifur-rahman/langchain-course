@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_ollama import ChatOllama
 
 load_dotenv()
 
@@ -37,18 +39,32 @@ def main():
     #                              api_key=os.getenv("GOOGLE_API_KEY"))
 
     # LLM without explicit API key
-    llm = ChatGoogleGenerativeAI(temperature=0,
-                                model="gemini-3.5-flash-lite")
+    llm = ChatGoogleGenerativeAI(temperature=0,model="gemini-3.5-flash-lite")
+
+    # Ollama integration (if needed)
+    # llm = ChatOllama(temperature=0, model="gemma3:270m")
 
     # Chain
     chain = summary_prompt_template | llm | StrOutputParser()
 
+    # Chain v2
+    chain_v2 = summary_prompt_template | llm | {
+        "clean_text": StrOutputParser(),
+        "raw_response": RunnablePassthrough()
+    }
+
     # Response
-    response = chain.invoke(input={"information": information})
+    # response = chain.invoke(input={"information": information})
+    response = chain_v2.invoke(input={"information": information})
+
 
     # when using StrOutputParser, the response is a string directly. do not need the .content attribute
     # print(response.content)
-    print(response)
+    # print(response)
+
+    # for chain v2
+    print(response["clean_text"])
+    print(response["raw_response"])
 
 
 if __name__ == "__main__":
